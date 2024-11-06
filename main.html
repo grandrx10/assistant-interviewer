@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant Interviewer</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #eef2f5;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #ffffff;
+            max-width: 700px;
+            width: 100%;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .question-box {
+            background-color: #dfe7f5;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 18px;
+            color: #444;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        .video-container {
+            position: relative;
+            margin: 20px 0;
+        }
+
+        #videoElement {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            background-color: #e0e0e0;
+        }
+
+        .recording-indicator {
+            display: none;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 6px 12px;
+            background-color: #d9534f;
+            color: white;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 6px;
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            50% { opacity: 0.5; }
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 10px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .start-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .stop-btn {
+            background-color: #f44336;
+            color: white;
+        }
+
+        .next-btn {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .tts-btn {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.95;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #ddd;
+            color: #777;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Assistant Interviewer</h1>
+        
+        <div class="question-box" id="currentQuestion">
+            Click "Start Recording" to begin the interview
+        </div>
+
+        <div class="video-container">
+            <video id="videoElement" autoplay muted></video>
+            <div class="recording-indicator" id="recordingIndicator">Recording</div>
+        </div>
+
+        <div class="controls">
+            <button class="start-btn" id="startButton">Start Recording</button>
+            <button class="stop-btn" id="stopButton" disabled>Stop Recording</button>
+            <button class="next-btn" id="nextButton" disabled>Next Question</button>
+            <button class="tts-btn" id="ttsButton">
+                <span id="ttsButtonText">Disable</span> Text-to-Speech
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript functionality remains the same
+        const questions = [
+            // General Questions
+            "Tell me about yourself and your background.",
+            "Why are you interested in this position?",
+            "What do you know about our company?",
+            "What are your greatest strengths?",
+            "What are your biggest weaknesses?",
+            "How did you hear about this job opportunity?",
+            "Why should we hire you over other candidates?",
+            "What are your career goals for the next five years?",
+            "How would you describe your ideal work environment?",
+            "What motivates you to do your best work?",
+            
+            // Behavioral Questions
+            "Can you tell me about a challenging situation at work and how you dealt with it?",
+            "Describe a time when you had to work under pressure.",
+            "Have you ever faced a conflict with a coworker? How did you resolve it?",
+            "Tell me about a time when you went above and beyond for a project.",
+            "Can you give an example of a time when you had to be creative to solve a problem?",
+            "Describe a situation where you showed leadership.",
+            "Tell me about a time you made a mistake at work. How did you handle it?",
+            "How do you prioritize your tasks when you have multiple deadlines?",
+            "What steps do you take to stay organized?",
+            "Describe a time when you disagreed with a manager or decision at work.",
+            
+            // Skills and Experience Questions
+            "What specific skills or experience make you a good fit for this role?",
+            "How have you improved your skills over the last year?",
+            "Tell me about a recent project where you demonstrated your skills.",
+            "What tools or software do you prefer to use for your work?",
+            "Have you ever led a team? How did you ensure the team’s success?",
+            "How do you approach learning a new skill or software?",
+            "Can you describe a time when you had to quickly adapt to a change at work?",
+            "How do you manage your time when working on complex tasks?",
+            "What do you consider your greatest professional achievement?",
+            "What was the most challenging project you've worked on?",
+            
+            // Problem-Solving Questions
+            "How do you approach solving complex problems?",
+            "Describe a time when you had to think outside the box to solve a problem.",
+            "Have you ever had to solve a problem with limited information? What did you do?",
+            "Can you walk me through a problem you solved that saved your team time or resources?",
+            "How do you handle unexpected problems at work?",
+            "What do you do when you’re stuck on a difficult problem?",
+            "Tell me about a time when your solution to a problem was successful.",
+            "Have you ever identified a problem and taken steps to fix it without being asked?",
+            "How do you evaluate the success of a solution you’ve implemented?",
+            "Can you describe a time when you handled a difficult technical issue?",
+            
+            // Teamwork and Collaboration Questions
+            "How do you approach working with a team?",
+            "Can you describe a time when you had to rely on team members to succeed?",
+            "How do you handle working with colleagues who have different opinions?",
+            "Tell me about a successful collaboration with a team.",
+            "What role do you usually take when working in a team setting?",
+            "Describe a time when you had to support a teammate who was struggling.",
+            "How do you ensure clear communication within a team?",
+            "How do you handle a team member not doing their share of work?",
+            "Can you give an example of a time when you built a relationship with a colleague?",
+            "What strategies do you use to manage conflicts in a team?",
+            
+            // Leadership and Management Questions
+            "What is your management style?",
+            "How do you motivate a team to achieve goals?",
+            "Describe a time when you had to lead a team under tight deadlines.",
+            "How do you handle feedback from team members?",
+            "What is the most challenging part of managing people for you?",
+            "How do you delegate tasks to your team?",
+            "Tell me about a time you had to give difficult feedback.",
+            "How do you develop and mentor your team members?",
+            "What do you believe are the key qualities of a good leader?",
+            "How do you balance your team’s needs with company goals?",
+            
+            // Cultural Fit Questions
+            "What type of work environment do you thrive in?",
+            "How do you handle criticism or feedback?",
+            "What do you like to do outside of work?",
+            "How would you describe your ideal company culture?",
+            "How do you ensure you stay motivated in your work?",
+            "What are some of your core personal values?",
+            "How do you contribute to a positive work environment?",
+            "What type of communication style do you prefer?",
+            "What motivates you to succeed in your job?",
+            "How do you handle change in the workplace?",
+            
+            // Career Goals and Aspirations
+            "Where do you see yourself in your career in the next few years?",
+            "What are you looking for in your next role?",
+            "What does success mean to you?",
+            "How do you plan to grow in your career?",
+            "What are your short-term and long-term goals?",
+            "What skills are you hoping to develop in your next role?",
+            "How do you see this job fitting into your career path?",
+            "What are you most excited about in your future career?",
+            "Are you planning to pursue further education or certifications?",
+            "What impact do you hope to make in this role?",
+            
+            // Technical Questions (for tech roles)
+            "Can you explain a complex technical concept in simple terms?",
+            "What’s your approach to debugging code?",
+            "Tell me about a challenging technical problem you solved.",
+            "How do you ensure code quality in your projects?",
+            "What coding languages are you most comfortable with?",
+            "How do you approach learning a new programming language or tool?",
+            "What’s the biggest project you've worked on from start to finish?",
+            "What frameworks or libraries are you experienced with?",
+            "How do you keep up with new technology trends?",
+            "Can you describe a time when you improved the performance of an application?",
+            
+            // Miscellaneous
+            "What’s a project you’re particularly proud of?",
+            "How do you balance your personal and professional life?",
+            "What do you do when you’re feeling stressed at work?",
+            "How would your previous coworkers describe you?",
+            "How do you continue to learn and grow outside of work?",
+            "What are some of the key trends in our industry that excite you?",
+            "What would you do if you didn’t get along with your manager?",
+            "How do you approach networking and building relationships?",
+            "What’s the most valuable lesson you’ve learned in your career?",
+            "What unique perspective or experience can you bring to our team?"
+        ];
+
+
+        let currentQuestionIndex = 0;
+        let mediaRecorder;
+        let recordedChunks = [];
+        let stream;
+        let questionOrder = [];
+        let textToSpeechEnabled = true;
+
+        const videoElement = document.getElementById('videoElement');
+        const startButton = document.getElementById('startButton');
+        const stopButton = document.getElementById('stopButton');
+        const nextButton = document.getElementById('nextButton');
+        const questionDisplay = document.getElementById('currentQuestion');
+        const recordingIndicator = document.getElementById('recordingIndicator');
+        const ttsButton = document.getElementById('ttsButton');
+        const ttsButtonText = document.getElementById('ttsButtonText');
+
+        const synth = window.speechSynthesis;
+
+        async function initializeCamera() {
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: true, 
+                    audio: true 
+                });
+                videoElement.srcObject = stream;
+            } catch (err) {
+                console.error("Error accessing camera:", err);
+                alert("Error accessing camera. Please make sure you have granted camera permissions.");
+            }
+        }
+
+        function startRecording() {
+            recordedChunks = [];
+            mediaRecorder = new MediaRecorder(stream);
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    recordedChunks.push(event.data);
+                }
+            };
+
+            mediaRecorder.onstop = () => {
+                const blob = new Blob(recordedChunks, { type: 'video/webm' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'interview-recording.webm';
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
+            mediaRecorder.start();
+            startButton.disabled = true;
+            stopButton.disabled = false;
+            nextButton.disabled = false;
+            recordingIndicator.style.display = 'block';
+            shuffleQuestions();
+            displayNextQuestion();
+        }
+
+        function stopRecording() {
+            mediaRecorder.stop();
+            startButton.disabled = false;
+            stopButton.disabled = true;
+            nextButton.disabled = true;
+            recordingIndicator.style.display = 'none';
+            currentQuestionIndex = 0;
+            questionDisplay.textContent = "Click 'Start Recording' to begin the interview";
+        }
+
+        function displayNextQuestion() {
+            if (currentQuestionIndex < questionOrder.length) {
+                const currentQuestion = questions[questionOrder[currentQuestionIndex]];
+                questionDisplay.textContent = currentQuestion;
+                if (textToSpeechEnabled) {
+                    speakQuestion(currentQuestion);
+                }
+                currentQuestionIndex++;
+            } else {
+                questionDisplay.textContent = "All questions completed. You can stop recording now.";
+                nextButton.disabled = true;
+            }
+        }
+
+        function speakQuestion(question) {
+            const utterance = new SpeechSynthesisUtterance(question);
+            synth.speak(utterance);
+        }
+
+        function shuffleQuestions() {
+            questionOrder = Array.from(Array(questions.length).keys());
+            for (let i = questionOrder.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [questionOrder[i], questionOrder[j]] = [questionOrder[j], questionOrder[i]];
+            }
+        }
+
+        function toggleTextToSpeech() {
+            textToSpeechEnabled = !textToSpeechEnabled;
+            ttsButtonText.textContent = textToSpeechEnabled ? 'Disable' : 'Enable';
+            ttsButton.style.backgroundColor = textToSpeechEnabled ? '#4CAF50' : '#f44336';
+        }
+
+        startButton.addEventListener('click', startRecording);
+        stopButton.addEventListener('click', stopRecording);
+        nextButton.addEventListener('click', displayNextQuestion);
+        ttsButton.addEventListener('click', toggleTextToSpeech);
+
+        initializeCamera();
+    </script>
+</body>
+</html>
